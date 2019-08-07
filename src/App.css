@@ -1,0 +1,16 @@
+
+.centre {
+
+  display: flex;
+
+  justify-content: center;
+
+}
+.par{
+  position:fixed;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
+
+
+}
