@@ -10,7 +10,7 @@ import Clarifai from 'clarifai';
 import Signin from './components/Signin/Signin'
 import Register from './components/Register/Register'
 const app = new Clarifai.App({
- apiKey: 'a42f627d551c4830bbd6fc72c7c962c5'
+ apiKey: 'e28505f79df4468695081810b6ef0731'
 });
 
 //Particles options
@@ -30,19 +30,24 @@ class App extends Component {
   constructor(){
     super();
     this.state={
+      name:'',
+      entries:'',
+      joined: null,
+      id:'',
       query: '',
       imageUrl:'',
       box:'',
-      signedIn: true,
-      route:'home',         // home, register, sigin
+      signedIn: false,
+      route:'signin',         // home, register, signin
 
     }
   }
   onChange = (event)=>{
     this.setState({query:event.target.value})
   }
+
   calculate = (response) =>{
-    let image =document.getElementById('ii');
+    let image =document.getElementById('inputimage');
     const width = Number(image.width);
     console.log("calculating....")
     const height = Number(image.height);
@@ -59,63 +64,50 @@ class App extends Component {
 
     }
 }
-  changeRoute = (s)=>{
-    if (s=='home'){
-      this.setState({signedIn:true, route:s}
-    )}
-    else{
-      this.setState({signedIn:false,route:s}
-      )}
-    }
-      //this.setState({route:s})
-      //console.log(this.state.route)
 
-  onSubmit = ()=>{
+  handleState = (data) => {
+    const {name, entries, joined, id, query, imageUrl, box, route} = data
+    if(data.id){
+        this.setState({name, entries, joined, id, query, imageUrl, box:'', signedIn:true, route: 'home'});
+    }
+    else {
+      this.setState({name, entries, joined, id, query, imageUrl, box:'', signedIn:false, route});
+    }
+
+
+  }
+
+  onSubmit = () => {
     this.setState({imageUrl:this.state.query})
 
     app.models.predict(Clarifai.FACE_DETECT_MODEL, this.state.query)
-    .catch((err)=>console.log("api not responding"))
+    .catch((err) => console.log("api not responding"))
     .then((response) =>  response.outputs[0].data.regions[0].region_info.bounding_box)
-    .then((response) => {
-      console.log('inside')
-      let image =document.getElementById('ii');
-      const width = Number(image.width);
-      console.log("calculating....")
-      const height = Number(image.height);
+    .then((response) => this.calculate(response)) //this.calculate(response)
+    .then((res)=> {
+      this.setState({box : res});
 
-      return {
+      fetch("http://localhost:3001/image", {
+        method: 'PUT',
+        body: JSON.stringify({id: this.state.id}),
+        headers: {'Content-Type': 'application/json'}
+      })
+      .then(res => res.json())
+      .then(res => this.setState({entries: res.entries}))
 
-        leftCol: response.left_col * width,
+     })
+    .catch((err) => console.log('error', err));
+ }
 
-        topRow: response.top_row * height,
-
-        rightCol: width - (response.right_col * width),
-
-        bottomRow: height - (response.bottom_row * height)
-}
-  })
-    .catch('no calculating')
-    .then((r)=>console.log(r))
-  //  .then((r)=> this.setState({box:r}))
-  //    this.setState({box : this.calculate(res)})
-  //      console.log(this.calculate(res))
-
-    //console.log(this.state.box)
-  }
-//  this.setState({box : this.calculate(response)})
-
-
-  render() {
-
-  //    this.setState({route:'home'})
+ render() {
     if(this.state.route == 'home'){
     return (
       <div>
 
         <Particles className  ='par' params= {jso} />
-        <Navigation route={this.state.route} changeRoute={this.changeRoute}/>
+        <Navigation route={this.state.route} handleState={this.handleState}/>
         <Logo/>
-        <Rank/>
+        <Rank entries={this.state.entries} name= {this.state.name} />
         <SearchBox onChange={this.onChange} onSubmit = {this.onSubmit} />
         <Viewer box = {this.state.box} imageUrl = {this.state.imageUrl}/>
        </div>);
@@ -125,9 +117,9 @@ class App extends Component {
          <div>
 
            <Particles className  ='par' params= {jso} />
-           <Navigation route={this.state.route} changeRoute={this.changeRoute}/>
-           <Logo/>
-           <Signin changeRoute={this.changeRoute} />
+           <Navigation route={this.state.route} handleState={this.handleState}/>
+           <Logo />
+           <Signin handleState = {this.handleState} />
           </div>
        );
      }
@@ -136,14 +128,14 @@ class App extends Component {
          <div>
 
            <Particles className  ='par' params= {jso} />
-           <Navigation route={this.state.route} changeRoute={this.changeRoute}/>
+           <Navigation route={this.state.route} handleState={this.handleState}/>
            <Logo/>
-           <Register changeRoute={this.changeRoute} />
+           <Register handleState = {this.handleState} />
           </div>
        );
      }
 
+}
 
-
-}}
+}
 export default App;

@@ -2,7 +2,7 @@
   "name": "Smart-Brain-FrontEnd",
   "version": "0.1.0",
   "homepage": "http://KandariSrinivas.github.io/Smart-Brain-FrontEnd",
-    "private": true,
+  "private": true,
   "dependencies": {
     "clarifai": "^2.7.1",
     "react": "^16.3.2",
